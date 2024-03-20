@@ -1,0 +1,52 @@
+name: csp
+
+services:
+  sparkmaster:
+    image: spark:latest
+    command: /opt/spark/sbin/start-master.sh -h 0.0.0.0 #map volume to customize config
+    networks:
+      - cluster-network-spark
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+      - "6066:6066"
+      - "4040:4040"
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    volumes:
+      - /home/gael/Projects/argonaultes/lab/volume_data_huge:/tmp/data_huge/
+
+
+  sparkworker01:
+    image: spark:latest    
+    command: /opt/spark/sbin/start-worker.sh spark://sparkmaster:7077 -c 4 -m 2G
+    ports:
+      - "8081:8081"
+    depends_on:
+      sparkmaster:
+        condition: service_started
+    networks:
+      - cluster-network-spark
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    volumes:
+      - /home/gael/Projects/argonaultes/lab/volume_data_huge:/tmp/data_huge/
+
+  sparkworker02:
+    image: spark:latest
+    command: /opt/spark/sbin/start-worker.sh spark://sparkmaster:7077 -c 2 -m 2G
+    ports:
+      - "8082:8081"
+    depends_on:
+      sparkmaster:
+        condition: service_started
+    networks:
+      - cluster-network-spark
+    environment:
+      - SPARK_NO_DAEMONIZE=true
+    volumes:
+      - /home/gael/Projects/argonaultes/lab/volume_data_huge:/tmp/data_huge/
+
+networks:
+  cluster-network-spark:
+    driver: bridge
